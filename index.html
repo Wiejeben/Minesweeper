@@ -62,7 +62,7 @@
 				<tr class="game-row" v-for="(row, x) in tiles">
 					<td class="game-tile" v-for="(tile, y) in row" @click.left="uncoverTile(x, y)" :class="{ 'game-tile__covered' : tile.covered }">
 						<span v-if="!tile.covered">
-							<img :src="'./img/' + getTileImage(x, y)" :alt="getTileValue(x, y)" width="24" height="24">
+							<img :src="'./img/' + getTileImage(tile)" :alt="tile.value" width="24" height="24">
 						</span>
 					</td>
 				</tr>	
@@ -80,8 +80,8 @@
 				width: 16,
 				height: 16,
 				mines: 40,
-				tiles: [],
-				minePositions: []
+				minePositions: [],
+				tiles: []
 			},
 			mounted: function() {
 				// Render game
@@ -92,11 +92,9 @@
 				generate: function() {
 					this.ready = false;
 
-					// Generate array with random positions
 					this.minePositions = this.getMinePositions();
-
-					// Generate 2D tiles
-					this.tiles = this.getInitialTiles();
+					this.generateInitialTiles();
+					this.assignTileValues();
 
 					this.ready = true;
 				},
@@ -118,7 +116,7 @@
 					return results;
 				},
 
-				getInitialTiles: function() {
+				generateInitialTiles: function() {
 					var tiles = [];
 
 					for (var x = 0; x < this.height; x++)
@@ -127,11 +125,24 @@
 						for (var y = 0; y < this.width; y++)
 						{
 							// covered
-							tiles[x][y] = { covered: true, flagged: false };
+							tiles[x][y] = { covered: true, flagged: false, value: 0 };
 						}
 					}
 
-					return tiles;
+					this.tiles = tiles;
+				},
+
+				assignTileValues: function() {
+					for (var x = 0; x <= this.tiles.length - 1; x++)
+					{
+						var row = this.tiles[x];
+
+						for (var y = 0; y <= row.length - 1; y++)
+						{
+							var tile = row[y];
+							tile.value = this.getTileValue(x, y);
+						}
+					}
 				},
 
 				getTileIndex: function(x, y) {
@@ -171,8 +182,8 @@
 					return value;
 				},
 
-				getTileImage: function(x, y) {
-					var value = this.getTileValue(x, y);
+				getTileImage: function(tile) {
+					var value = tile.value;
 
 					if (value == 0) return 'empty.png';
 					if (value == -1) return 'mine.png';
