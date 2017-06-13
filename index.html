@@ -42,7 +42,7 @@
 </head>
 <body>
 	<div id="app" class="container">
-		<form v-on:submit.prevent="generate">
+		<form @submit.prevent="generate">
 			<fieldset>
 				<legend>Configuration</legend>
 				<label for="inputWidth">Width: </label><input type="number" v-model.number="width" id="inputWidth"><br>
@@ -163,19 +163,13 @@
 				},
 
 				getTileValue: function(x, y) {
-					// Current
 					if (this.hasMine(x, y)) return -1;
 
 					var value = 0;
 
-					value += this.hasMineInteger(x - 1, y - 1); // Top left
-					value += this.hasMineInteger(x - 1, y); 	// Top
-					value += this.hasMineInteger(x - 1, y + 1); // Top right
-					value += this.hasMineInteger(x, y - 1); 	// Left
-					value += this.hasMineInteger(x, y + 1); 	// Right
-					value += this.hasMineInteger(x + 1, y - 1); // Bottom left
-					value += this.hasMineInteger(x + 1, y); 	// Bottom
-					value += this.hasMineInteger(x + 1, y + 1); // Bottom right
+					this.performActionOnSurroundings(x, y, this.hasMineInteger, function(result) {
+						value += result;
+					})
 
 					return value;
 				},
@@ -190,34 +184,41 @@
 				},
 
 				uncoverTile: function(x, y) {
-					if (this.tiles[x][y].covered == false) return; // already uncovered
-
-					this.tiles[x][y].covered = false;
-					console.log('uncover');
+					var tile = this.tiles[x][y];
+					if (!tile.covered) return; // already uncovered
 
 					// Uncover all connected zero tiles
 					if (this.getTileValue(x, y) == 0)
 					{
-						console.log('start uncovering all zeros');
-						// this.uncoverAllZeroTiles(x, y)
+						this.uncoverAllZeroTiles(x, y)
+						return;
 					}
+
+					tile.covered = false;
 				},
 
 				uncoverAllZeroTiles: function(x, y) {
-					if (this.isOutsideBounds(x, y) || this.getTileValue(x, y) != 0) return;
+					if (this.isOutsideBounds(x, y)) return; // check for bounds
 
-					this.uncoverTile(x, y); // uncover current zero tile
+					var tile = this.tiles[x][y];
+					if (!tile.covered) return;
 
-					console.log('scan');
+					tile.covered = false;
 
-					// this.uncoverAllZeroTiles(x - 1, y - 1);
-					this.uncoverAllZeroTiles(x - 1, y);
-					// this.uncoverAllZeroTiles(x - 1, y + 1);
-					this.uncoverAllZeroTiles(x, y - 1);
-					this.uncoverAllZeroTiles(x, y + 1);
-					// this.uncoverAllZeroTiles(x + 1, y - 1);
-					this.uncoverAllZeroTiles(x + 1, y);
-					// this.uncoverAllZeroTiles(x + 1, y + 1);
+					if (tile.value == 0) this.performActionOnSurroundings(x, y, this.uncoverAllZeroTiles)
+				},
+
+				performActionOnSurroundings(x, y, action, result) {
+					if (typeof result == "undefined") result = function(x) {};
+
+					result(action(x - 1, y - 1));	// Top left
+					result(action(x - 1, y)); 		// Top
+					result(action(x - 1, y + 1));	// Top right
+					result(action(x, 	 y - 1)); 	// Left
+					result(action(x, 	 y + 1)); 	// Right
+					result(action(x + 1, y - 1)); 	// Bottom left
+					result(action(x + 1, y)); 		// Bottom
+					result(action(x + 1, y + 1)); 	// Bottom right
 				},
 
 				isOutsideBounds: function(x, y) {
