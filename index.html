@@ -23,28 +23,24 @@
 
 		#game {
 			background: #BBB;
-			border: 1px solid #333;
-			border-bottom: none;
-			border-right: none;
+			line-height: 0;
+			border-spacing: 0;
 			user-select: none;
 		}
 
 		.game-row {
-			display: flex;
+
 		}
 
 		.game-tile {
-			width: 21px;
-			height: 21px;
-			border: 1px solid #333;
-			border-top: none;
-			border-left: none;
-			text-align: center;
+			padding: 0;
+			width: 24px;
+			height: 24px;
+			background: url(./img/empty.png);
 		}
 
 		.game-tile__covered {
-			border: 3px outset;
-			background: #ccc;
+			background: url(./img/covered.png);
 		}
 	</style>
 </head>
@@ -61,18 +57,23 @@
 			</fieldset>
 		</form>
 
-		<div id="game" v-if="ready">
-			<div class="game-row" v-for="(row, x) in tiles">
-				<div class="game-tile" v-for="(tile, y) in row" @click.left="uncoverTile(x, y)" :class="{ 'game-tile__covered' : tile.covered }">
-					<span v-if="!tile.covered">{{ getTileValue(x, y) }}</span>
-				</div>
-			</div>
-		</div>
+		<table id="game" v-if="ready">
+			<tbody>
+				<tr class="game-row" v-for="(row, x) in tiles">
+					<td class="game-tile" v-for="(tile, y) in row" @click.left="uncoverTile(x, y)" :class="{ 'game-tile__covered' : tile.covered }">
+						<span v-if="!tile.covered">
+							<img :src="'./img/' + getTileImage(x, y)" :alt="getTileValue(x, y)" width="24" height="24">
+						</span>
+					</td>
+				</tr>	
+			</tbody>
+			
+		</table>
 	</div>
 
 	<script src="https://unpkg.com/vue"></script>
 	<script>
-		var app = new Vue({
+		new Vue({
 			el: '#app',
 			data: {
 				ready: false,
@@ -138,6 +139,8 @@
 				},
 
 				hasMine(x, y) {
+					if (this.isOutsideBounds(x, y)) return false;
+
 					return this.minePositions.indexOf(this.getTileIndex(x, y)) > -1
 				},
 
@@ -156,31 +159,25 @@
 
 					var value = 0;
 
-					// Top left
-					value += this.hasMineInteger(x - 1, y - 1);
-
-					// Top
-					value += this.hasMineInteger(x - 1, y);
-
-					// Top right
-					value += this.hasMineInteger(x - 1, y + 1);
-
-					// Left
-					value += this.hasMineInteger(x, y - 1);
-
-					// Right
-					value += this.hasMineInteger(x, y + 1);
-
-					// Bottom left
-					value += this.hasMineInteger(x + 1, y - 1);
-
-					// Bottom
-					value += this.hasMineInteger(x + 1, y);
-
-					// Bottom right
-					value += this.hasMineInteger(x + 1, y + 1);
+					value += this.hasMineInteger(x - 1, y - 1); // Top left
+					value += this.hasMineInteger(x - 1, y); 	// Top
+					value += this.hasMineInteger(x - 1, y + 1); // Top right
+					value += this.hasMineInteger(x, y - 1); 	// Left
+					value += this.hasMineInteger(x, y + 1); 	// Right
+					value += this.hasMineInteger(x + 1, y - 1); // Bottom left
+					value += this.hasMineInteger(x + 1, y); 	// Bottom
+					value += this.hasMineInteger(x + 1, y + 1); // Bottom right
 
 					return value;
+				},
+
+				getTileImage: function(x, y) {
+					var value = this.getTileValue(x, y);
+
+					if (value == 0) return 'empty.png';
+					if (value == -1) return 'mine.png';
+
+					return 'number-' + value + '.png'
 				},
 
 				uncoverTile: function(x, y) {
@@ -193,13 +190,12 @@
 					if (this.getTileValue(x, y) == 0)
 					{
 						console.log('start uncovering all zeros');
-						this.uncoverAllZeroTiles(x, y)
+						// this.uncoverAllZeroTiles(x, y)
 					}
 				},
 
 				uncoverAllZeroTiles: function(x, y) {
-					if (x < 0 || x > (this.tiles.length - 1) || y < 0 || y > (this.tiles[0].length - 1)) return; // out of bounds
-					if (this.getTileValue(x, y) != 0) return; // stop if not zero
+					if (this.isOutsideBounds(x, y) || this.getTileValue(x, y) != 0) return;
 
 					this.uncoverTile(x, y); // uncover current zero tile
 
@@ -213,6 +209,10 @@
 					// this.uncoverAllZeroTiles(x + 1, y - 1);
 					this.uncoverAllZeroTiles(x + 1, y);
 					// this.uncoverAllZeroTiles(x + 1, y + 1);
+				},
+
+				isOutsideBounds: function(x, y) {
+					return (x < 0 || x > (this.tiles.length - 1) || y < 0 || y > (this.tiles[0].length - 1))
 				}
 			}
 		})
