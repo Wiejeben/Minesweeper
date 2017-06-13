@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Minesweeper</title>
+	<style>
+		*, *:before, *:after {
+			box-sizing: inherit;
+		}
+
+		html {
+			box-sizing: border-box;
+		}
+
+		body {
+			font-family: Arial, sans-serif;
+		}
+
+		.container {
+			max-width: 960px;
+			margin: 0 auto;
+		}
+
+		#game {
+			background: #BBB;
+			border: 1px solid #333;
+			border-bottom: none;
+			border-right: none;
+			user-select: none;
+		}
+
+		.game-row {
+			display: flex;
+		}
+
+		.game-tile {
+			width: 21px;
+			height: 21px;
+			border: 1px solid #333;
+			border-top: none;
+			border-left: none;
+			text-align: center;
+		}
+
+		.game-tile__covered {
+			border: 3px outset;
+			background: #ccc;
+		}
+	</style>
+</head>
+<body>
+	<div id="app" class="container">
+		<form v-on:submit.prevent="generate">
+			<fieldset>
+				<legend>Configuration</legend>
+				<label for="inputWidth">Width: </label><input type="number" v-model.number="width" id="inputWidth"><br>
+				<label for="inputHeight">Height: </label><input type="number" v-model.number="height" id="inputHeight"><br>
+				<label for="inputMines">Mines: </label><input type="number" v-model.number="mines" id="inputMines"><br>
+				<hr>
+				<button type="submit">Submit &amp; reload</button>
+			</fieldset>
+		</form>
+
+		<div id="game" v-if="ready">
+			<div class="game-row" v-for="(row, x) in tiles">
+				<div class="game-tile" v-for="(tile, y) in row" @click.left="uncoverTile(x, y)" :class="{ 'game-tile__covered' : tile.covered }">
+					<span v-if="!tile.covered">{{ getTileValue(x, y) }}</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="https://unpkg.com/vue"></script>
+	<script>
+		var app = new Vue({
+			el: '#app',
+			data: {
+				ready: false,
+				width: 16,
+				height: 16,
+				mines: 40,
+				tiles: [],
+				minePositions: []
+			},
+			mounted: function() {
+				// Render game
+				this.generate()
+			},
+
+			methods: {
+				generate: function() {
+					this.ready = false;
+
+					// Generate array with random positions
+					this.minePositions = this.getMinePositions();
+
+					// Generate 2D tiles
+					this.tiles = this.getInitialTiles();
+
+					this.ready = true;
+				},
+
+				getMinePositions: function() {
+					var length = (this.height * this.width);
+
+					var results = []
+					while (results.length < this.mines)
+					{
+					    var number = Math.floor(Math.random() * length);
+
+					    // Skip: already exiss
+					    if(results.indexOf(number) > -1) continue;
+
+					    results[results.length] = number;
+					}
+
+					return results;
+				},
+
+				getInitialTiles: function() {
+					var tiles = [];
+
+					for (var x = 0; x < this.height; x++)
+					{
+						tiles[x] = [];
+						for (var y = 0; y < this.width; y++)
+						{
+							// covered
+							tiles[x][y] = { covered: true, flagged: false };
+						}
+					}
+
+					return tiles;
+				},
+
+				getTileIndex: function(x, y) {
+					return ((x+1) * (y+1)) - 1
+				},
+
+				hasMine(x, y) {
+					return this.minePositions.indexOf(this.getTileIndex(x, y)) > -1
+				},
+
+				hasMineInteger(x, y) {
+					if (this.hasMine(x, y))
+					{
+						return 1
+					}
+
+					return 0
+				},
+
+				getTileValue: function(x, y) {
+					// Current
+					if (this.hasMine(x, y)) return -1;
+
+					var value = 0;
+
+					// Top left
+					value += this.hasMineInteger(x - 1, y - 1);
+
+					// Top
+					value += this.hasMineInteger(x - 1, y);
+
+					// Top right
+					value += this.hasMineInteger(x - 1, y + 1);
+
+					// Left
+					value += this.hasMineInteger(x, y - 1);
+
+					// Right
+					value += this.hasMineInteger(x, y + 1);
+
+					// Bottom left
+					value += this.hasMineInteger(x + 1, y - 1);
+
+					// Bottom
+					value += this.hasMineInteger(x + 1, y);
+
+					// Bottom right
+					value += this.hasMineInteger(x + 1, y + 1);
+
+					return value;
+				},
+
+				uncoverTile: function(x, y) {
+					if (this.tiles[x][y].covered == false) return; // already uncovered
+
+					this.tiles[x][y].covered = false;
+					console.log('uncover');
+
+					// Uncover all connected zero tiles
+					if (this.getTileValue(x, y) == 0)
+					{
+						console.log('start uncovering all zeros');
+						this.uncoverAllZeroTiles(x, y)
+					}
+				},
+
+				uncoverAllZeroTiles: function(x, y) {
+					if (x < 0 || x > (this.tiles.length - 1) || y < 0 || y > (this.tiles[0].length - 1)) return; // out of bounds
+					if (this.getTileValue(x, y) != 0) return; // stop if not zero
+
+					this.uncoverTile(x, y); // uncover current zero tile
+
+					console.log('scan');
+
+					// this.uncoverAllZeroTiles(x - 1, y - 1);
+					this.uncoverAllZeroTiles(x - 1, y);
+					// this.uncoverAllZeroTiles(x - 1, y + 1);
+					this.uncoverAllZeroTiles(x, y - 1);
+					this.uncoverAllZeroTiles(x, y + 1);
+					// this.uncoverAllZeroTiles(x + 1, y - 1);
+					this.uncoverAllZeroTiles(x + 1, y);
+					// this.uncoverAllZeroTiles(x + 1, y + 1);
+				}
+			}
+		})
+	</script>
+</body>
+</html>
