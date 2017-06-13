@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
+	<meta charset="utf-8">
 	<title>Minesweeper</title>
+	<meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1">
 	<style>
 		*, *:before, *:after {
 			box-sizing: inherit;
@@ -79,6 +80,7 @@
 	<script>
 		new Vue({
 			el: '#app',
+
 			data: {
 				ready: false,
 				width: 16,
@@ -88,6 +90,7 @@
 				minePositions: [],
 				tiles: []
 			},
+
 			mounted: function() {
 				// Render game
 				this.generate()
@@ -105,12 +108,12 @@
 				},
 
 				getMinePositions: function() {
-					var length = (this.height * this.width);
+					const length = (this.height * this.width);
 
-					var results = [];
+					const results = [];
 					while (results.length < this.mines)
 					{
-					    var number = Math.floor(Math.random() * length);
+					    let number = Math.floor(Math.random() * length);
 
 					    // Skip: already exiss
 					    if(results.indexOf(number) > -1) continue;
@@ -122,12 +125,12 @@
 				},
 
 				generateInitialTiles: function() {
-					var tiles = [];
+					const tiles = [];
 
-					for (var x = 0; x < this.height; x++)
+					for (let x = 0; x < this.height; x++)
 					{
 						tiles[x] = [];
-						for (var y = 0; y < this.width; y++)
+						for (let y = 0; y < this.width; y++)
 						{
 							tiles[x][y] = { covered: !this.debug, flagged: false, value: 0 };
 						}
@@ -137,13 +140,13 @@
 				},
 
 				assignTileValues: function() {
-					for (var x = 0; x <= this.tiles.length - 1; x++)
+					for (let x = 0; x <= this.tiles.length - 1; x++)
 					{
-						var row = this.tiles[x];
+						const row = this.tiles[x];
 
-						for (var y = 0; y <= row.length - 1; y++)
+						for (let y = 0; y <= row.length - 1; y++)
 						{
-							var tile = row[y];
+							const tile = row[y];
 							tile.value = this.getTileValue(x, y);
 						}
 					}
@@ -171,7 +174,7 @@
 				getTileValue: function(x, y) {
 					if (this.hasMine(x, y)) return -1;
 
-					var value = 0;
+					let value = 0;
 
 					this.performActionOnSurroundings(x, y, this.hasMineInteger, function(result) {
 						value += result;
@@ -181,7 +184,7 @@
 				},
 
 				getTileImage: function(tile) {
-					var value = tile.value;
+					const value = tile.value;
 
 					if (value == 0) return 'empty.png';
 					if (value == -1) return 'mine.png';
@@ -190,7 +193,7 @@
 				},
 
 				uncoverTile: function(x, y) {
-					var tile = this.tiles[x][y];
+					const tile = this.tiles[x][y];
 					if (!tile.covered) return; // already uncovered
 
 					// Uncover all connected zero tiles
@@ -206,7 +209,7 @@
 				uncoverAllZeroTiles: function(x, y) {
 					if (this.isOutsideBounds(x, y)) return; // check for bounds
 
-					var tile = this.tiles[x][y];
+					const tile = this.tiles[x][y];
 					if (!tile.covered) return;
 
 					tile.covered = false;
