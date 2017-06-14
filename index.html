@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<title>Minesweeper</title>
-	<meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1">
+	<meta name="viewport" content="width=device-width, minimum-scale=1">
 	<style>
 		*, *:before, *:after {
 			box-sizing: inherit;
@@ -34,17 +34,24 @@
 			border: 1px solid #7F7F7F;
 			border-top: none;
 			border-left: none;
+			image-rendering: pixelated;
 		}
 
 		.minefield-tile {
 			padding: 0;
 			width: 24px;
 			height: 24px;
-			background: url(./img/empty.png);
+			background: #C0C0C0;
+			/*border: 1px solid #7E7E7E;
+			border-right: none;
+			border-bottom: none;*/
 		}
 
 		.minefield-tile__covered {
-			background: url(./img/covered.png);
+			background: #C0C0C0;
+			border: #FFF 3px outset;
+			border-right-color: #CECECE;
+			border-bottom-color: #CECECE;
 		}
 	</style>
 </head>
@@ -108,7 +115,7 @@
 				},
 
 				getMinePositions: function() {
-					const length = (this.height * this.width);
+					const length = this.height * this.width;
 
 					const results = [];
 					while (results.length < this.mines)
